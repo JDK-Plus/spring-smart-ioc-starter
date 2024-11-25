@@ -1,0 +1,7 @@
+
+# springboot 默认的 http 端口
+server.port: 8080
+
+smart:
+  inject:
+    enable: true
