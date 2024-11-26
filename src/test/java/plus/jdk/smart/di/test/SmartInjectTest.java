@@ -51,11 +51,8 @@ public class SmartInjectTest {
 
     @Test
     public void hello() throws InterruptedException {
-        int i = 0;
-        while (i == 0) {
-            smsDispatchService.dispatchMessage(new DispatchContext() {});
-            TimeUnit.SECONDS.sleep(1);
-        }
+        DispatchContext context = new DispatchContext() {};
+        smsDispatchService.dispatchMessage(context);
         log.info("hello");
     }
 }

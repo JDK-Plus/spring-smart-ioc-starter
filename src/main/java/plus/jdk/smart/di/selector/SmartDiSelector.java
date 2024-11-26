@@ -15,8 +15,8 @@ public class SmartDiSelector extends WebApplicationObjectSupport {
 
     @Bean
     InjectBeanRegistryProcessor getInjectBeanRegistryProcessor(ConfigurableBeanFactory beanFactory, GlobalInjectProperties properties,
-                                                               CglibDynamicProxy cglibDynamicProxy) {
-        return new InjectBeanRegistryProcessor(getApplicationContext(), beanFactory, properties, cglibDynamicProxy);
+                                                               CglibDynamicProxy cglibDynamicProxy, SmartDependencyInjectFactory smartDependencyInjectFactory) {
+        return new InjectBeanRegistryProcessor(getApplicationContext(), beanFactory, properties, cglibDynamicProxy, smartDependencyInjectFactory);
     }
 
     @Bean

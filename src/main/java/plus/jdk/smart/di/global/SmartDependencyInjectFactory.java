@@ -1,11 +1,17 @@
 package plus.jdk.smart.di.global;
 
+import org.luaj.vm2.Globals;
+import org.luaj.vm2.LuaTable;
+import org.luaj.vm2.LuaValue;
+import org.luaj.vm2.lib.jse.CoerceJavaToLua;
+import org.luaj.vm2.lib.jse.JsePlatform;
 import plus.jdk.smart.di.annotations.SmartService;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.RootBeanDefinition;
+import plus.jdk.smart.di.model.SdiDefinition;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -13,22 +19,38 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class SmartDependencyInjectFactory {
 
+    private final Map<Class<?>, List<SdiDefinition>> groupImplementMap = new ConcurrentHashMap<>();
 
-    /**
-     * 通过Cglib动态代理和SmartService实现对象的注入和管理。
-     */
-    public Object injectObject(CglibDynamicProxy dynamicProxy, Class<?> clazz, SmartService smartService, Map<Class<?>, List<Object>> groupImplementMap){
+    protected void registerSdiDefinition(SdiDefinition sdiDefinition) {
+        groupImplementMap.computeIfAbsent(sdiDefinition.getSmartService().group(), k -> new ArrayList<>()).add(sdiDefinition);
+    }
+
+    protected Object injectObject(CglibDynamicProxy dynamicProxy, SdiDefinition sdiDefinition) {
+        Class<?> clazz = sdiDefinition.getSmartService().group();
+        SmartService smartService = sdiDefinition.getSmartService();
         Object sdiObject = dynamicProxy.acquireProxy(clazz, new Invoker() {
             @Override
             @SneakyThrows
             public Object invoke(Object proxy, Method method, Object[] args) {
                 Class<?> interfaceClazz = smartService.group();
-                List<Object> implementations = groupImplementMap.get(interfaceClazz);
-                Object object =  implementations.get(new Random().nextInt(implementations.size()));
-                Object result = method.invoke(object, args);
-                return result;
+                List<SdiDefinition> implementations = groupImplementMap.get(interfaceClazz);
+                Object object =  implementations.get(new Random().nextInt(implementations.size())).getBeanInstance();
+                return method.invoke(object, args);
             }
         });
+
         return sdiObject;
+    }
+
+    protected Boolean evalLuaPolicy(String script, Map<String, Object> args) {
+        Globals globals = JsePlatform.standardGlobals();
+        LuaValue chunk = globals.load(script);
+        LuaTable params = new LuaTable();
+        for(String key : args.keySet()) {
+            params.set(key, CoerceJavaToLua.coerce(args.get(key)));
+        }
+        LuaValue dispatchContextLua = CoerceJavaToLua.coerce(params);
+        LuaValue result = chunk.call(dispatchContextLua);
+        return result.toboolean();
     }
 }

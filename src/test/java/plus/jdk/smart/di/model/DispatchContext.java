@@ -7,6 +7,11 @@ import lombok.Data;
 public abstract class DispatchContext {
 
     /**
+     * 上下文的名称。
+     */
+    private String name;
+
+    /**
      * 手机号码，用于发送短信。
      */
     private String mobile;

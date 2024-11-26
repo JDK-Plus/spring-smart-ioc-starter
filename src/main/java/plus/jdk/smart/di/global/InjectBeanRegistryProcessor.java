@@ -1,6 +1,7 @@
 package plus.jdk.smart.di.global;
 
 import plus.jdk.smart.di.annotations.SmartService;
+import plus.jdk.smart.di.model.SdiDefinition;
 import plus.jdk.smart.di.properties.GlobalInjectProperties;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
@@ -45,10 +46,7 @@ public class InjectBeanRegistryProcessor implements BeanDefinitionRegistryPostPr
      */
     private final CglibDynamicProxy cglibDynamicProxy;
 
-    /**
-     * 存储接口类型到实现对象的映射关系，用于后续的依赖注入。
-     */
-    private final Map<Class<?>, List<Object>> groupImplementMap = new ConcurrentHashMap<>();
+    private SmartDependencyInjectFactory smartDependencyInjectFactory;
 
     /**
      * 构造函数，初始化注入bean的注册处理器。
@@ -57,17 +55,16 @@ public class InjectBeanRegistryProcessor implements BeanDefinitionRegistryPostPr
      * @param beanFactory        可配置的bean工厂，用于注册bean。
      * @param properties         全局注入属性对象，用于获取注入配置信息。
      */
-    public InjectBeanRegistryProcessor(ApplicationContext applicationContext,
-                                       ConfigurableBeanFactory beanFactory,
-                                       GlobalInjectProperties properties,
-                                       CglibDynamicProxy cglibDynamicProxy) {
+    public InjectBeanRegistryProcessor(ApplicationContext applicationContext, ConfigurableBeanFactory beanFactory, GlobalInjectProperties properties,
+                                       CglibDynamicProxy cglibDynamicProxy, SmartDependencyInjectFactory smartDependencyInjectFactory) {
         this.applicationContext = applicationContext;
         this.beanFactory = beanFactory;
         this.properties = properties;
         this.cglibDynamicProxy = cglibDynamicProxy;
+        this.smartDependencyInjectFactory = smartDependencyInjectFactory;
     }
 
-    private String resolveBeanClassName(BeanDefinition beanDefinition) {
+    protected String resolveBeanClassName(BeanDefinition beanDefinition) {
         if (StringUtils.isNotEmpty(beanDefinition.getBeanClassName())) {
             return beanDefinition.getBeanClassName();
         }
@@ -82,11 +79,11 @@ public class InjectBeanRegistryProcessor implements BeanDefinitionRegistryPostPr
     }
 
     @SneakyThrows
-    public static Class<?> tryLoadClass(ClassLoader classLoader, String interfaceClassName) {
+    protected static Class<?> tryLoadClass(ClassLoader classLoader, String interfaceClassName) {
         return classLoader.loadClass(interfaceClassName);
     }
 
-    public Class<?> loadClass(String className, BeanDefinitionRegistry registry) throws RuntimeException {
+    protected Class<?> loadClass(String className, BeanDefinitionRegistry registry) throws RuntimeException {
         ConfigurableBeanFactory cbf = (ConfigurableBeanFactory) registry;
         Class<?> clazz = tryLoadClass(Objects.requireNonNull(cbf.getBeanClassLoader()), className);
         if (clazz != null) {
@@ -107,18 +104,21 @@ public class InjectBeanRegistryProcessor implements BeanDefinitionRegistryPostPr
             String beanClassName = resolveBeanClassName(beanDefinition);
             Class<?> beanClass = loadClass(beanClassName, registry);
             SmartService smartService = beanClass.getAnnotation(SmartService.class);
+            SdiDefinition sdiDefinition = SdiDefinition.builder()
+                    .beanName(beanDefinitionName)
+                    .clazz(beanClass)
+                    .smartService(smartService)
+                    .beanInstance(beanObj)
+                    .build();
             RootBeanDefinition groupBeanDefinition = (RootBeanDefinition) BeanDefinitionBuilder.rootBeanDefinition(SmartDependencyInjectFactory.class)
                     .setFactoryMethodOnBean("injectObject", "smartDependencyInjectFactory")
                     .addConstructorArgValue(cglibDynamicProxy)
-                    .addConstructorArgValue(smartService.group())
-                    .addConstructorArgValue(smartService)
-                    .addConstructorArgValue(groupImplementMap)
+                    .addConstructorArgValue(sdiDefinition)
                     .setLazyInit(false)
                     .setScope(BeanDefinition.SCOPE_SINGLETON)
                     .getBeanDefinition();
             groupBeanDefinition.setTargetType(smartService.group());
-            groupImplementMap.putIfAbsent(smartService.group(), new ArrayList<>());
-            groupImplementMap.get(smartService.group()).add(beanObj);
+            smartDependencyInjectFactory.registerSdiDefinition(sdiDefinition);
             Class<?> groupClazz = smartService.group();
             String interfaceBeanName = Character.toLowerCase(groupClazz.getSimpleName().charAt(0)) + groupClazz.getSimpleName().substring(1);
             if (!registry.containsBeanDefinition(interfaceBeanName)) {
