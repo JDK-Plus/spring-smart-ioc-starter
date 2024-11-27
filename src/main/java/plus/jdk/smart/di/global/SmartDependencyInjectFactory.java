@@ -1,5 +1,10 @@
 package plus.jdk.smart.di.global;
 
+import org.luaj.vm2.Globals;
+import org.luaj.vm2.LuaTable;
+import org.luaj.vm2.LuaValue;
+import org.luaj.vm2.lib.jse.CoerceJavaToLua;
+import org.luaj.vm2.lib.jse.JsePlatform;
 import plus.jdk.smart.di.annotations.SmartService;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -35,5 +40,17 @@ public class SmartDependencyInjectFactory {
         });
 
         return sdiObject;
+    }
+
+    protected Boolean evalLuaPolicy(String script, Map<String, Object> args) {
+        Globals globals = JsePlatform.standardGlobals();
+        LuaValue chunk = globals.load(script);
+        LuaTable params = new LuaTable();
+        for(String key : args.keySet()) {
+            params.set(key, CoerceJavaToLua.coerce(args.get(key)));
+        }
+        LuaValue dispatchContextLua = CoerceJavaToLua.coerce(params);
+        LuaValue result = chunk.call(dispatchContextLua);
+        return result.toboolean();
     }
 }

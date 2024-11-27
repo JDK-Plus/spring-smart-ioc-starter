@@ -1,5 +1,6 @@
 package plus.jdk.smart.di.service.impl;
 
+import plus.jdk.smart.di.annotations.ConditionRule;
 import plus.jdk.smart.di.annotations.SmartService;
 import plus.jdk.smart.di.constant.SmsProvider;
 import plus.jdk.smart.di.model.DispatchContext;
@@ -13,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 @SmartService(group = SmsDispatchService.class)
 public class AlibabaCloudSmsDispatchService implements SmsDispatchService {
     @Override
+    @ConditionRule("dispatchContext.name == 'jack'")
     public Boolean dispatchMessage(DispatchContext dispatchContext) {
         log.info("dispatchMessage by alibaba cloud");
         dispatchContext.setProvider(SmsProvider.ali_cloud);
