@@ -4,7 +4,7 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Data
-@ConfigurationProperties(prefix = "smart.inject.enable")
+@ConfigurationProperties(prefix = "smart.inject")
 public class GlobalInjectProperties {
 
     /**

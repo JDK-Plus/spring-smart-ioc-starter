@@ -23,4 +23,9 @@ public @interface SmartService {
      * @return 分组信息，若未设置则返回空字符串。
      */
     Class<?> group();
+
+    /**
+     * 是否是主实例。
+     */
+    boolean primary() default false;
 }

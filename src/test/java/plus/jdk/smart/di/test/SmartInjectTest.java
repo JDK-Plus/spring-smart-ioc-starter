@@ -1,9 +1,11 @@
 package plus.jdk.smart.di.test;
 
+import org.junit.Assert;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
+import plus.jdk.smart.di.global.Advised;
 import plus.jdk.smart.di.model.DispatchContext;
 import plus.jdk.smart.di.service.SmsDispatchService;
 import plus.jdk.smart.di.service.impl.AlibabaCloudSmsDispatchService;
@@ -50,9 +52,24 @@ public class SmartInjectTest {
     private SmsDispatchService smsDispatchService;
 
     @Test
-    public void hello() throws InterruptedException {
+    public void testEvalExpression() throws InterruptedException {
         DispatchContext context = new DispatchContext() {};
+        context.setName("ali");
         smsDispatchService.dispatchMessage(context);
+        Assert.assertTrue(context.getReceipt().startsWith("ali"));
+
+        context.setName("tencent");
+        smsDispatchService.dispatchMessage(context);
+        Assert.assertTrue(context.getReceipt().startsWith("tencent"));
+
+        context.setName("jd");
+        smsDispatchService.dispatchMessage(context);
+        Assert.assertTrue(context.getReceipt().startsWith("jd"));
+
+        if(smsDispatchService instanceof Advised) {
+            log.info("{}", ((Advised) smsDispatchService).getOriginTarget());
+            log.info("{}", smsDispatchService.toString());
+        }
         log.info("hello");
     }
 }

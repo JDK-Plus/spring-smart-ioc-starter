@@ -1,7 +1,7 @@
 package plus.jdk.smart.di.global;
 
 import plus.jdk.smart.di.annotations.SmartService;
-import plus.jdk.smart.di.model.SdiDefinition;
+import plus.jdk.smart.di.model.BeanDescriptor;
 import plus.jdk.smart.di.properties.GlobalInjectProperties;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
@@ -18,11 +18,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.core.Ordered;
 import org.springframework.core.type.MethodMetadata;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class InjectBeanRegistryProcessor implements BeanDefinitionRegistryPostProcessor, Ordered {
 
@@ -46,7 +42,10 @@ public class InjectBeanRegistryProcessor implements BeanDefinitionRegistryPostPr
      */
     private final CglibDynamicProxy cglibDynamicProxy;
 
-    private SmartDependencyInjectFactory smartDependencyInjectFactory;
+    /**
+     * 注入工厂对象，用于创建注入实例。
+     */
+    private final SmartDependencyInjectFactory smartDependencyInjectFactory;
 
     /**
      * 构造函数，初始化注入bean的注册处理器。
@@ -104,21 +103,21 @@ public class InjectBeanRegistryProcessor implements BeanDefinitionRegistryPostPr
             String beanClassName = resolveBeanClassName(beanDefinition);
             Class<?> beanClass = loadClass(beanClassName, registry);
             SmartService smartService = beanClass.getAnnotation(SmartService.class);
-            SdiDefinition sdiDefinition = SdiDefinition.builder()
+            BeanDescriptor beanDescriptor = BeanDescriptor.builder()
                     .beanName(beanDefinitionName)
                     .clazz(beanClass)
                     .smartService(smartService)
                     .beanInstance(beanObj)
                     .build();
             RootBeanDefinition groupBeanDefinition = (RootBeanDefinition) BeanDefinitionBuilder.rootBeanDefinition(SmartDependencyInjectFactory.class)
-                    .setFactoryMethodOnBean("injectObject", "smartDependencyInjectFactory")
+                    .setFactoryMethodOnBean("createObject", "smartDependencyInjectFactory")
                     .addConstructorArgValue(cglibDynamicProxy)
-                    .addConstructorArgValue(sdiDefinition)
+                    .addConstructorArgValue(beanDescriptor)
                     .setLazyInit(false)
                     .setScope(BeanDefinition.SCOPE_SINGLETON)
                     .getBeanDefinition();
             groupBeanDefinition.setTargetType(smartService.group());
-            smartDependencyInjectFactory.registerSdiDefinition(sdiDefinition);
+            smartDependencyInjectFactory.registerSdiDefinition(beanDescriptor);
             Class<?> groupClazz = smartService.group();
             String interfaceBeanName = Character.toLowerCase(groupClazz.getSimpleName().charAt(0)) + groupClazz.getSimpleName().substring(1);
             if (!registry.containsBeanDefinition(interfaceBeanName)) {

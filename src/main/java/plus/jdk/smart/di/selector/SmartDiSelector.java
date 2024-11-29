@@ -1,6 +1,7 @@
 package plus.jdk.smart.di.selector;
 
 
+import org.springframework.context.ApplicationContext;
 import plus.jdk.smart.di.global.CglibDynamicProxy;
 import plus.jdk.smart.di.global.InjectBeanRegistryProcessor;
 import plus.jdk.smart.di.global.SmartDependencyInjectFactory;
@@ -25,7 +26,7 @@ public class SmartDiSelector extends WebApplicationObjectSupport {
     }
 
     @Bean("smartDependencyInjectFactory")
-    SmartDependencyInjectFactory getSmartDependencyInjectFactory() {
-        return new SmartDependencyInjectFactory();
+    SmartDependencyInjectFactory getSmartDependencyInjectFactory(ApplicationContext applicationContext) {
+        return new SmartDependencyInjectFactory(applicationContext);
     }
 }

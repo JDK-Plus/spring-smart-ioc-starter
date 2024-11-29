@@ -17,7 +17,7 @@ public abstract class DispatchContext {
     private String mobile;
 
     /**
-     * 短信服务提供商的标识符。
+     * 收据号码，用于记录交易信息。
      */
-    private SmsProvider provider;
+    private String receipt;
 }
