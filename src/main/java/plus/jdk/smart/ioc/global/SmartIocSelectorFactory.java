@@ -9,7 +9,7 @@ import plus.jdk.smart.ioc.annotations.ConditionOnRule;
 import plus.jdk.smart.ioc.annotations.SmartService;
 import lombok.SneakyThrows;
 import plus.jdk.smart.ioc.model.BeanDescriptor;
-import plus.jdk.smart.ioc.model.SmartBeanDefinition;
+import plus.jdk.smart.ioc.model.SmartIocDefinition;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -23,7 +23,7 @@ public class SmartIocSelectorFactory {
     /**
      * Stores the mapping relationship between the SmartService interface and its implementation class for dynamic proxying and instantiation.
      */
-    private final Map<Class<?>, SmartBeanDefinition> beanDefinitionMap = new ConcurrentHashMap<>();
+    private final Map<Class<?>, SmartIocDefinition> beanDefinitionMap = new ConcurrentHashMap<>();
 
     /**
      * Application context, used to obtain environment variables and parse expressions.
@@ -47,15 +47,15 @@ public class SmartIocSelectorFactory {
      * Register the SDI definition into the corresponding smart service group.
      */
     protected void registerSdiDefinition(BeanDescriptor beanDescriptor) {
-        beanDefinitionMap.computeIfAbsent(beanDescriptor.getSmartService().group(), k -> new SmartBeanDefinition());
-        SmartBeanDefinition smartBeanDefinition = beanDefinitionMap.get(beanDescriptor.getSmartService().group());
-        smartBeanDefinition.getBeanDescriptors().add(beanDescriptor);
-        if(beanDescriptor.getSmartService().primary() && smartBeanDefinition.getDefaultDescriptor() != null) {
+        beanDefinitionMap.computeIfAbsent(beanDescriptor.getSmartService().group(), k -> new SmartIocDefinition());
+        SmartIocDefinition smartIocDefinition = beanDefinitionMap.get(beanDescriptor.getSmartService().group());
+        smartIocDefinition.getBeanDescriptors().add(beanDescriptor);
+        if(beanDescriptor.getSmartService().primary() && smartIocDefinition.getDefaultDescriptor() != null) {
             throw new RuntimeException(String.format("interface %s primary bean %s already exists, Please confirm whether the configured policy is correct",
                     beanDescriptor.getSmartService().group(), beanDescriptor.getBeanName()));
         }
         if(beanDescriptor.getSmartService().primary()) {
-            smartBeanDefinition.setDefaultDescriptor(beanDescriptor);
+            smartIocDefinition.setDefaultDescriptor(beanDescriptor);
         }
     }
 
@@ -72,13 +72,14 @@ public class SmartIocSelectorFactory {
                 // 禁止修改全局变量
                 .sideEffectGlobal(false)
                 // 禁用副作用，即不允许表达式对任何变量（全局或局部）进行修改
-                .sideEffect(false);;
-        JexlEngine jexl = new JexlBuilder().features(jexlFeatures).create();
+                .sideEffect(false);
         Properties properties = new Properties();
         properties.put("beanName", beanName);
         properties.put("methodName", methodName);
+        JexlEngine jexl = new JexlBuilder().features(jexlFeatures).create();
         JexlContext context = new MapContext();
         context.set("args", params);
+        context.set("random", new Random());
         context.set("current", properties);
         context.set("global", globalSmartIocContext.getGlobalProperties());
         Object result = jexl.createExpression(expression).evaluate(context);
@@ -103,8 +104,8 @@ public class SmartIocSelectorFactory {
     protected Object switchBeanToInvoke(Class<?> interfaceClazz, Method method, Object[] args) {
         Map<String, Object> params =  IntStream.range(0, method.getParameterCount()).boxed()
                 .collect(Collectors.toMap(i -> method.getParameters()[i].getName(), i -> args[i]));;
-        SmartBeanDefinition smartBeanDefinition = beanDefinitionMap.get(interfaceClazz);
-        for(BeanDescriptor beanDescriptor : smartBeanDefinition.getBeanDescriptors()) {
+        SmartIocDefinition smartIocDefinition = beanDefinitionMap.get(interfaceClazz);
+        for(BeanDescriptor beanDescriptor : smartIocDefinition.getBeanDescriptors()) {
             Class<?> clazz = beanDescriptor.getClazz();
             Method implMethod = ClassUtil.getDeclaredMethod(clazz, method.getName(), method.getParameterTypes());
             ConditionOnRule classConditionOnRule = clazz.getAnnotation(ConditionOnRule.class);
@@ -128,8 +129,8 @@ public class SmartIocSelectorFactory {
                 }
             }
         }
-        if(smartBeanDefinition.getDefaultDescriptor() != null) {
-            return method.invoke(smartBeanDefinition.getDefaultDescriptor().getBeanInstance(), args);
+        if(smartIocDefinition.getDefaultDescriptor() != null) {
+            return method.invoke(smartIocDefinition.getDefaultDescriptor().getBeanInstance(), args);
         }
         throw new RuntimeException(String.format("No implementation class meeting the ConditionOnRule conditions for interface %s was found, " +
                 "and no primary bean was registered, method: %s", interfaceClazz, method.getName()));

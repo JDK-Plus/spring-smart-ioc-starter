@@ -68,7 +68,7 @@ public class SmartFlowByMethodArgsTest {
         // The input name parameter is other, and the default main bean implementation is called to send text messages.
         context.setName("other");
         Assert.assertTrue(smsDispatchService.dispatchMessage(context));
-        Assert.assertTrue(context.getReceipt().startsWith("default"));
+        Assert.assertTrue(context.getReceipt().startsWith("tencent"));
 
         // test the getOriginTarget method implemented by the proxy class
         Assert.assertTrue(smsDispatchService instanceof Advised);

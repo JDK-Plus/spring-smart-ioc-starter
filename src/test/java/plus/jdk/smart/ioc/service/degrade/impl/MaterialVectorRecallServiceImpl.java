@@ -2,17 +2,16 @@ package plus.jdk.smart.ioc.service.degrade.impl;
 
 import plus.jdk.smart.ioc.annotations.ConditionOnRule;
 import plus.jdk.smart.ioc.annotations.SmartService;
+import plus.jdk.smart.ioc.model.RecallContext;
+import plus.jdk.smart.ioc.model.RecallResult;
 import plus.jdk.smart.ioc.service.degrade.MaterialRecallService;
-
-import java.util.Collections;
-import java.util.List;
 
 @ConditionOnRule("global.qps <= 1000")
 @SmartService(group = MaterialRecallService.class)
-public class MaterialRecallServiceImpl implements MaterialRecallService {
+public class MaterialVectorRecallServiceImpl implements MaterialRecallService {
 
     @Override
-    public List<String> recall(String feature) {
-        return Collections.emptyList();
+    public RecallResult recall(RecallContext context) {
+        return RecallResult.builder().receipt("normal, qps <= 1000").build();
     }
 }

@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
  * 通过腾讯云下发短信
  */
 @Slf4j
-@SmartService(group = SmsDispatchService.class)
+@SmartService(group = SmsDispatchService.class, primary = true)
 public class TencentCloudSmsDispatchService implements SmsDispatchService {
     @Override
     @ConditionOnRule("args.dispatchContext.getName() == 'tencent'")
