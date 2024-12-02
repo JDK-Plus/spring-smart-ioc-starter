@@ -4,6 +4,7 @@ package plus.jdk.smart.ioc.selector;
 import org.springframework.context.ApplicationContext;
 import plus.jdk.smart.ioc.global.CglibDynamicProxy;
 import plus.jdk.smart.ioc.global.InjectBeanRegistryProcessor;
+import plus.jdk.smart.ioc.global.GlobalSmartIocContext;
 import plus.jdk.smart.ioc.global.SmartIocSelectorFactory;
 import plus.jdk.smart.ioc.properties.GlobalInjectProperties;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -35,7 +36,16 @@ public class SmartIocSelector {
      * Get a smart dependency injection factory instance.
      */
     @Bean("smartIocSelectorFactory")
-    SmartIocSelectorFactory getSmartDependencyInjectFactory(ApplicationContext applicationContext) {
-        return new SmartIocSelectorFactory(applicationContext);
+    SmartIocSelectorFactory getSmartDependencyInjectFactory(ApplicationContext applicationContext,
+                                                            GlobalSmartIocContext globalSmartIocContext) {
+        return new SmartIocSelectorFactory(applicationContext, globalSmartIocContext);
+    }
+
+    /**
+     * Globally obtain SmartIocContext instance, used to register global variables and global functions
+     */
+    @Bean
+    GlobalSmartIocContext getSmartIocContext() {
+        return new GlobalSmartIocContext();
     }
 }

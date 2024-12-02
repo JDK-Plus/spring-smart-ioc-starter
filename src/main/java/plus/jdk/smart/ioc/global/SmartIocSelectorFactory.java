@@ -31,10 +31,16 @@ public class SmartIocSelectorFactory {
     private final ApplicationContext applicationContext;
 
     /**
+     * Smart IoC context for obtaining environment variables and parsing expressions.
+     */
+    private final GlobalSmartIocContext globalSmartIocContext;
+
+    /**
      * Create a new SmartIocSelectorFactory instance.
      */
-    public SmartIocSelectorFactory(ApplicationContext applicationContext) {
+    public SmartIocSelectorFactory(ApplicationContext applicationContext, GlobalSmartIocContext globalSmartIocContext) {
         this.applicationContext = applicationContext;
+        this.globalSmartIocContext = globalSmartIocContext;
     }
 
     /**
@@ -68,10 +74,13 @@ public class SmartIocSelectorFactory {
                 // 禁用副作用，即不允许表达式对任何变量（全局或局部）进行修改
                 .sideEffect(false);;
         JexlEngine jexl = new JexlBuilder().features(jexlFeatures).create();
+        Properties properties = new Properties();
+        properties.put("beanName", beanName);
+        properties.put("methodName", methodName);
         JexlContext context = new MapContext();
         context.set("args", params);
-        context.set("beanName", beanName);
-        context.set("methodName", methodName);
+        context.set("current", properties);
+        context.set("global", globalSmartIocContext.getGlobalProperties());
         Object result = jexl.createExpression(expression).evaluate(context);
         stopWatch.stop();
         log.info("evalExpression {}, cost {}ms, {}", expression, stopWatch.getTotalTimeMillis(), stopWatch.prettyPrint());
