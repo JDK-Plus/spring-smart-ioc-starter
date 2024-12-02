@@ -1,4 +1,4 @@
-package plus.jdk.smart.ioc.test;
+package plus.jdk.smart.ioc.service;
 
 import org.junit.Assert;
 import plus.jdk.smart.ioc.global.Advised;
@@ -47,7 +47,7 @@ public class SmartIocTest {
     private SmsDispatchService smsDispatchService;
 
     @Test
-    public void testEvalExpression() throws InterruptedException {
+    public void testSmallFlow() throws InterruptedException {
         DispatchContext context = new DispatchContext() {};
         context.setName("ali");
         Assert.assertTrue(smsDispatchService.dispatchMessage(context));

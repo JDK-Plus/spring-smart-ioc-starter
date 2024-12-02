@@ -9,18 +9,18 @@ import plus.jdk.smart.ioc.properties.GlobalInjectProperties;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.context.support.WebApplicationObjectSupport;
 
 @Configuration
-public class SmartIocSelector extends WebApplicationObjectSupport {
+public class SmartIocSelector {
 
     /**
      * Gets a handler for injecting beans into the Registry.
      */
     @Bean
     InjectBeanRegistryProcessor getInjectBeanRegistryProcessor(ConfigurableBeanFactory beanFactory, GlobalInjectProperties properties,
-                                                               CglibDynamicProxy cglibDynamicProxy, SmartIocSelectorFactory smartIocSelectorFactory) {
-        return new InjectBeanRegistryProcessor(getApplicationContext(), beanFactory, properties, cglibDynamicProxy, smartIocSelectorFactory);
+                                                               CglibDynamicProxy cglibDynamicProxy, SmartIocSelectorFactory smartIocSelectorFactory,
+                                                               ApplicationContext applicationContext) {
+        return new InjectBeanRegistryProcessor(applicationContext, beanFactory, properties, cglibDynamicProxy, smartIocSelectorFactory);
     }
 
     /**
@@ -35,7 +35,7 @@ public class SmartIocSelector extends WebApplicationObjectSupport {
      * Get a smart dependency injection factory instance.
      */
     @Bean("smartIocSelectorFactory")
-    SmartIocSelectorFactory getSmartDependencyInjectFactory() {
-        return new SmartIocSelectorFactory(getApplicationContext());
+    SmartIocSelectorFactory getSmartDependencyInjectFactory(ApplicationContext applicationContext) {
+        return new SmartIocSelectorFactory(applicationContext);
     }
 }
