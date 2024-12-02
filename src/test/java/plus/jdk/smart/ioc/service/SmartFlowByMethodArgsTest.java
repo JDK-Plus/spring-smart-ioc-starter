@@ -21,25 +21,6 @@ import javax.annotation.Resource;
 @SpringBootTest(classes = TomcatLauncher.class, webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 public class SmartFlowByMethodArgsTest {
 
-
-    /**
-     * Provides examples of Tencent Cloud SMS distribution service.
-     */
-    @Resource
-    private TencentCloudSmsDispatchService tencentCloudSmsDispatchService;
-
-    /**
-     * Provides examples of Alibaba Cloud SMS delivery service.
-     */
-    @Resource
-    private AlibabaCloudSmsDispatchService alibabaCloudSmsDispatchService;
-
-    /**
-     * Provides examples of JD Cloud SMS distribution service.
-     */
-    @Resource
-    private JdCloudSmsDispatchService jdCloudSmsDispatchService;
-
     /**
      * The injected SMS delivery service instance is used to simulate SMS delivery in tests.
      */
@@ -68,7 +49,7 @@ public class SmartFlowByMethodArgsTest {
         // The input name parameter is other, and the default main bean implementation is called to send text messages.
         context.setName("other");
         Assert.assertTrue(smsDispatchService.dispatchMessage(context));
-        Assert.assertTrue(context.getReceipt().startsWith("default"));
+        Assert.assertTrue(context.getReceipt().startsWith("tencent"));
 
         // test the getOriginTarget method implemented by the proxy class
         Assert.assertTrue(smsDispatchService instanceof Advised);

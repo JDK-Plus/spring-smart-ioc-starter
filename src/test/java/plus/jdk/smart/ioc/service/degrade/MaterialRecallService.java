@@ -1,5 +1,8 @@
 package plus.jdk.smart.ioc.service.degrade;
 
+import plus.jdk.smart.ioc.model.RecallContext;
+import plus.jdk.smart.ioc.model.RecallResult;
+
 import java.util.List;
 
 /**
@@ -14,5 +17,5 @@ public interface MaterialRecallService {
      * The recalled materials can be materials in the form of strings. ID, name or other identifier
      * @return List of material identifiers, each identifier is a string
      */
-    List<String> recall(String feature);
+    RecallResult recall(RecallContext context);
 }

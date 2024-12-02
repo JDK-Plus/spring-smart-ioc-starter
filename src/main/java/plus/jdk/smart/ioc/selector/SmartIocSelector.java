@@ -1,6 +1,7 @@
 package plus.jdk.smart.ioc.selector;
 
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.ApplicationContext;
 import plus.jdk.smart.ioc.global.CglibDynamicProxy;
 import plus.jdk.smart.ioc.global.InjectBeanRegistryProcessor;

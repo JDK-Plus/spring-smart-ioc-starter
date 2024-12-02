@@ -10,7 +10,7 @@ import java.util.List;
  * It is mainly used in scenarios where Bean instantiation configuration needs to be dynamically determined.
  */
 @Data
-public class SmartBeanDefinition {
+public class SmartIocDefinition {
 
     /**
      * Stores a set of Bean descriptors used to describe different Bean instantiation configurations

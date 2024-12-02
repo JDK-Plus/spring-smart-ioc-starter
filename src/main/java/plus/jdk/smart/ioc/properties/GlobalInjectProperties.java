@@ -10,5 +10,5 @@ public class GlobalInjectProperties {
     /**
      * Whether to enable global injection function.
      */
-    private boolean enabled = false;
+    private boolean enable = false;
 }
