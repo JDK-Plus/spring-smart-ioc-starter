@@ -1,10 +1,16 @@
+## 一、说在前面的话
 
-## 一、摘要
+这是一个基于动态代理与配置中心的Spring Boot接口实现类动态切换方法研究和实现的项目。
 
 这是一个通过动态切换接口的实现类（springboot 中的 bean ），实现了一种高效而灵活的解决方案，用于应对复杂系统中的服务降级和功能灰度发布。
 
-**该项目提出并实现了一种使用动态代理和配置中心来管理某个接口的多个业务实现，通过配置中心动态切换 Bean 的实现类，能够快速实现服务降级。
-此外，借助 [JEXL](https://commons.apache.org/proper/commons-jexl/)  自定义方法的解析规则，项目还提供了一种小流量功能灰度发布的解决方案。**
+**该项目提出并实现了一种使用动态代理和配置中心来管理某个接口的多个业务实现，通过动态切换 Bean 的实现类快速实现服务降级。
+此外，借助 [JEXL](https://commons.apache.org/proper/commons-jexl/)  自定义方法的解析规则，还提供了一种小流量功能灰度发布的解决方案。
+**
+
+在当今复杂的业务系统中，服务降级和功能灰度发布已成为保障系统稳定性和灵活性的关键需求。本项目通过动态切换接口的实现类（Spring Boot中的Bean），提出了一种高效而灵活的解决方案。
+利用动态代理和配置中心的结合，以及[JEXL](https://commons.apache.org/proper/commons-jexl/)自定义方法的解析规则，我们实现了对接口的多种业务实现进行动态管理，
+从而快速应对服务降级和小流量功能灰度发布的场景。
 
 ## 二、相关工作 & 设计理念
 
@@ -16,61 +22,63 @@
 
 **设计理念**
 
-在日常的编码中，六大设计原则可谓深入人心，
-在日常编码中，六大设计原则已深入人心。依赖倒置原则（Dependency Inversion Principle, DIP）和开闭原则（Open/Closed Principle, OCP）要求我们面向接口编程，
+在日常编码中，六大设计原则已深入人心。依赖倒置原则（Dependency Inversion Principle, DIP）和开闭原则（Open/Closed Principle,
+OCP）要求我们面向接口编程，
 这样在编程过程中无需关注底层业务的具体实现，而是通过接口来定义流程中的逻辑执行和数据流转。
-里氏替换原则（Liskov Substitution Principle, LSP）和接口隔离原则（Interface Segregation Principle, ISP）则要求我们确保流程中的任何接口实现都可以被替换，
+里氏替换原则（Liskov Substitution Principle, LSP）和接口隔离原则（Interface Segregation Principle,
+ISP）则要求我们确保流程中的任何接口实现都可以被替换，
 且替换后程序行为不会发生变化。这些原则为我们的设计和实现提供了坚实的理论依据。
 
 **实现原理**
 
-```plantuml
-@startuml
-title 设计时序图
-!define service_start 服务启动
-!define record_impl "记录每个接口的实现类"
-!define record_impl_msg 记录bean加载过程\n中的每个接口的的实现类
-!define proxy_bean "动态代理"
-!define create_proxy_msg "创建代理类\n并注册全局的 bean"
-!define start_success "启动成功"
-!define start_success_msg "服务启动完成"
-!define bean_load_flow bean加载流程
-!define logic_exec_group_name 逻辑执行
-!define logic_exec "逻辑调用"
-!define logic_exec_msg "通过代理类发起逻辑调用"
-!define get_impl_msg 获取接口的实现类
-!define parse_condition_rule 解析实现类的切换规则
-!define jexl_engine "Jexl引擎"
-!define jexl_engine_create_msg "创建jexl解析引擎"
-!define jexl_engine_context_msg "向jexl注册方法入参"
-!define jexl_engine_context_reg_msg "向jexl注册全局变量和自定义函数"
-!define jexl_engine_eval_msg "通过 jexl 来执行脚本并获取返回结果"
+实现原理其实很简单，通过代理类来执行规则判定即可，通过时序图描述的逻辑如下：
 
-group bean_load_flow
-    autonumber
-    service_start -> record_impl : record_impl_msg
-    record_impl -> proxy_bean: create_proxy_msg
-    proxy_bean -> start_success:start_success_msg
-end
-
-group logic_exec_group_name
-    autonumber
-    logic_exec -> proxy_bean:logic_exec_msg
-    proxy_bean -> record_impl:get_impl_msg
-    
-    record_impl -> proxy_bean: parse_condition_rule
-    proxy_bean -> jexl_engine: jexl_engine_create_msg
-    proxy_bean -> jexl_engine: jexl_engine_context_msg
-    proxy_bean -> jexl_engine: jexl_engine_context_reg_msg
-    proxy_bean -> jexl_engine: jexl_engine_eval_msg
-end
-@enduml
-```
-
+![](doc/img/idea.png)
 
 ## 三、高级用法-自定义全局变量和全局函数
 
-> 待补充
+组件中提供了一个 bean ```GlobalSmartIocContext#registerGlobalVar(name, obj)``` 来注册全局的变量的功能，示例如下：
+
+> 注意, 这个registerGlobalVar是全局的，会存在堆空间里面, 本质上其实对应 bean 实例里面的一个`ConcurrentHashMap`
+> ，后续每次执行方法或类的
+> condition rule的时候，都会把全局变量注册到 jexl 的 global 属性中，当然，你也可以写入一个工具类进来执行函数调用，但是这里不建议执行过于复杂的逻辑。
+> 并且这里出于安全考虑，不允许写入的脚本执行任何具有副作用（例如篡改全局变量或函数入参、执行循环调用等）的逻辑，仅允许执行简单的判定表达式
+
+**`@ConditionOnRule`执行 eval逻辑时运行环境中的一些魔法变量的说明**
+
+| 变量名     | 说明                                                                                          | 补充                                                                                                                                                                                                                                  |
+|---------|---------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| args    | 当前调用的方法的入参, 允许在condition rule里面使用函数入参判定是否调用该实现类的方法，这个参数每次执行方法调用的时候都会作为临时变量写入运行环境            | 例如，你的方法定义为```String greeting(String name, String sex);```, 那么你可以在 condition rule里面通过 `args.name` 或 `args.sex` 来访问被调用的方法(Method)的入参                                                                                                  |
+| global  | 全局的变量或工具类                                                                                   | 你可以使用 `global` 在condition rule中访问你写入的全局变量或一些工具类，例如，当你使用 `globalSmartIocContext.registerGlobalVar("random", new Random()))`注册`random`后，可以使用这样子的表达式 `@ConditionOnRule("global.randdom.nextInt(100) % 10 >= 8")`来将 20% 的流量来打到当前的这个实现类上 |
+| current | 允许在 condition rule 维度来访问当前的 beanName(`current.beanName`) 和 methodName(`current.methodName`) | 这里你可以通过监听配置中心使用 `@ConditionOnRule("current.beanName == global.myServiceName")` 来指定当前要切换为哪个实现类. 这里的 `myServiceName`可以通过 `GlobalSmartIocContext#registerGlobalVar(name, obj)`写入                                                       |
+
+**写入全局变量：**
+
+```java
+import java.util.Random;
+
+public class SetGlobalConfigTest {
+
+    /**
+     * Material recall service instance, used to execute related business logic.
+     */
+    @Resource
+    private MaterialRecallService materialRecallService;
+
+    /**
+     * Global intelligent IOC context instance, used to obtain and manage global configuration information.
+     */
+    @Resource
+    private GlobalSmartIocContext globalSmartIocContext;
+
+    @Test
+    public void degradeTest() {
+        // Tests if qps <= 1000 normally uses the normal vector recall implementation to return recommended content
+        globalSmartIocContext.registerGlobalVar("qps", 1);
+        globalSmartIocContext.registerGlobalVar("random", new Random());
+    }
+}
+```
 
 ## 四、服务降级 & 小流量灰度的示例
 
@@ -90,11 +98,13 @@ public interface SmsDispatchService {
     Boolean dispatchMessage(DispatchContext dispatchContext);
 }
 ```
+
 下面给出我们可以通过请求参数中的`name`属性来小流量该次行为调用不同的供应商来发送短信的示例：
 
 **通过腾讯云发送短信：**
 
 ```java
+
 @Slf4j
 // 通过注解的 primary 属性标注该实现为默认的短信发送渠道，当其他所有实现类的条件都不匹配是默认调用该渠道来发送
 @SmartService(group = SmsDispatchService.class, primary = true)
@@ -110,7 +120,9 @@ public class TencentCloudSmsDispatchService implements SmsDispatchService {
 ```
 
 **通过京东云发送短信：**
+
 ```java
+
 @Slf4j
 @SmartService(group = SmsDispatchService.class)
 public class JdCloudSmsDispatchService implements SmsDispatchService {
@@ -127,6 +139,7 @@ public class JdCloudSmsDispatchService implements SmsDispatchService {
 **通过阿里云发送短信：**
 
 ```java
+
 @Slf4j
 @SmartService(group = SmsDispatchService.class)
 public class AlibabaCloudSmsDispatchService implements SmsDispatchService {
@@ -139,14 +152,16 @@ public class AlibabaCloudSmsDispatchService implements SmsDispatchService {
     }
 }
 ```
+
 **执行效果如下：**
 
 ```java
+
 @Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = TomcatLauncher.class, webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 public class SmartFlowByMethodArgsTest {
-    
+
     /**
      * The injected SMS delivery service instance is used to simulate SMS delivery in tests.
      */
@@ -157,7 +172,8 @@ public class SmartFlowByMethodArgsTest {
     public void testSmallFlow() throws InterruptedException {
 
         // The input name parameter is ali, and the Alibaba Cloud interface is called to send text messages.
-        DispatchContext context = new DispatchContext() {};
+        DispatchContext context = new DispatchContext() {
+        };
         context.setName("ali");
         Assert.assertTrue(smsDispatchService.dispatchMessage(context));
         Assert.assertTrue(context.getReceipt().startsWith("ali"));
@@ -242,6 +258,7 @@ public class DegradeSortByDbMaterialRecallServiceImpl implements MaterialRecallS
 **执行效果如下：**
 
 ```java
+
 @Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = TomcatLauncher.class, webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)

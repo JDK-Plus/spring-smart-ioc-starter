@@ -1,6 +1,8 @@
 package plus.jdk.smart.ioc.global;
 
+import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Smart IoC context for obtaining environment variables and parsing expressions.
@@ -10,7 +12,7 @@ public class GlobalSmartIocContext {
     /**
      * Stores the configuration properties of SmartIocContext.
      */
-    private final Properties properties = new Properties();
+    private final Map<String, Object> properties = new ConcurrentHashMap<>();
 
     /**
      * Register a global variable.
@@ -29,7 +31,7 @@ public class GlobalSmartIocContext {
     /**
      * Get the value of a global variable.
      */
-    protected Properties getGlobalProperties() {
+    protected  Map<String, Object>  getGlobalProperties() {
         return properties;
     }
 }
