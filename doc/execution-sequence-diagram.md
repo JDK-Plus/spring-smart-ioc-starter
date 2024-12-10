@@ -1,6 +1,6 @@
-```plantuml
+```plantuml:execution-sequence-diagram
 @startuml
-title 设计时序图
+title 启动 & 执行时序图
 !theme vibrant
 !define service_start 服务启动
 !define record_impl "记录每个接口的实现类"
@@ -21,6 +21,7 @@ title 设计时序图
 !define jexl_engine_context_reg_msg "向jexl注册全局变量和自定义函数"
 !define jexl_engine_eval_msg "通过 jexl 来执行脚本并获取返回结果"
 !define jexl_engine_eval_result "jexl 执行输入的条件表达式并返回结果"
+!define jexl_engine_eval_condition "判定jexl 执行输入的条件表达式是否为 true"
 !define loop_bean_impl_msg "遍历所有的 bean 实现"
 !define script_eval_true_msg "jexl eval结果为 true"
 !define script_eval_false_msg "jexl eval结果为 false"
@@ -48,6 +49,7 @@ group logic_exec_group_name
         proxy_bean -> jexl_engine: jexl_engine_context_reg_msg
         proxy_bean -> jexl_engine: jexl_engine_eval_msg
         jexl_engine -> proxy_bean: jexl_engine_eval_result
+        proxy_bean --> proxy_bean: jexl_engine_eval_condition
         alt script_eval_true_msg
             autonumber
             proxy_bean -> record_impl: bean_impl_invoke_method_msg

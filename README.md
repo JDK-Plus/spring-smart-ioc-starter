@@ -32,7 +32,8 @@ ISP）则要求我们确保流程中的任何接口实现都可以被替换，
 
 实现原理其实很简单，通过代理类来执行规则判定即可，通过时序图描述的逻辑如下：
 
-![](doc/img/idea.png)
+
+![](doc/img/execution-sequence-diagram.svg)
 
 你可以像这样子引入他：
 
