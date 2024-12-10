@@ -6,6 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import plus.jdk.smart.ioc.TomcatLauncher;
 import plus.jdk.smart.ioc.global.Advised;
+import plus.jdk.smart.ioc.global.SmartIocSelectorFactory;
 import plus.jdk.smart.ioc.model.DispatchContext;
 import plus.jdk.smart.ioc.service.small.flow.SmsDispatchService;
 import plus.jdk.smart.ioc.service.small.flow.impl.AlibabaCloudSmsDispatchService;

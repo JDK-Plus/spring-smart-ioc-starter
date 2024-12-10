@@ -1,15 +1,11 @@
 ## 一、说在前面的话
 
-这是一种基于动态代理与配置中心切换 bean 的实现类来达到服务降级与流量灰度发布方法研究。
+本项目描述并实现了一种基于动态代理与配置中心切换 bean 的实现类来达到服务降级与流量灰度发布方法的研究。
 
 这是一个通过动态切换接口的实现类（springboot 中的 bean ），实现了一种高效而灵活的解决方案，用于应对复杂系统中的服务降级和功能灰度发布。
 
 **该项目提出并实现了一种使用动态代理和配置中心来管理某个接口的多个业务实现，通过动态切换 Bean 的实现类快速实现服务降级。
 此外，借助 [JEXL](https://commons.apache.org/proper/commons-jexl/)  自定义方法的解析规则，还提供了一种小流量功能灰度发布的解决方案。**
-
-在当今复杂的业务系统中，服务降级和功能灰度发布已成为保障系统稳定性和灵活性的关键需求。本项目通过动态切换接口的实现类（Spring Boot中的Bean），提出了一种高效而灵活的解决方案。
-利用动态代理和配置中心的结合，以及[JEXL](https://commons.apache.org/proper/commons-jexl/)自定义方法的解析规则，我们实现了对接口的多种业务实现进行动态管理，
-从而快速应对服务降级和小流量功能灰度发布的场景。
 
 ## 二、相关工作 & 设计理念
 
@@ -32,7 +28,8 @@ ISP）则要求我们确保流程中的任何接口实现都可以被替换，
 
 实现原理其实很简单，通过代理类来执行规则判定即可，通过时序图描述的逻辑如下：
 
-![](doc/img/idea.png)
+
+![](doc/img/execution-sequence-diagram.svg)
 
 你可以像这样子引入他：
 
@@ -40,7 +37,7 @@ ISP）则要求我们确保流程中的任何接口实现都可以被替换，
 <dependency>
     <groupId>plus.jdk</groupId>
     <artifactId>spring-smart-ioc-starter</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.2</version>
 </dependency>
 ```
 
@@ -55,11 +52,11 @@ ISP）则要求我们确保流程中的任何接口实现都可以被替换，
 
 **`@ConditionOnRule`执行 eval逻辑时运行环境中的一些魔法变量的说明**
 
-| 变量名     | 说明                                                                                          | 补充                                                                                                                                                                                                                                  |
-|---------|---------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| args    | 当前调用的方法的入参, 允许在condition rule里面使用函数入参判定是否调用该实现类的方法，这个参数每次执行方法调用的时候都会作为临时变量写入运行环境            | 例如，你的方法定义为```String greeting(String name, String sex);```, 那么你可以在 condition rule里面通过 `args.name` 或 `args.sex` 来访问被调用的方法(Method)的入参                                                                                                  |
-| global  | 全局的变量或工具类                                                                                   | 你可以使用 `global` 在condition rule中访问你写入的全局变量或一些工具类，例如，当你使用 `globalSmartIocContext.registerGlobalVar("random", new Random()))`注册`random`后，可以使用这样子的表达式 `@ConditionOnRule("global.randdom.nextInt(100) % 10 >= 8")`来将 20% 的流量来打到当前的这个实现类上 |
-| current | 允许在 condition rule 维度来访问当前的 beanName(`current.beanName`) 和 methodName(`current.methodName`) | 这里你可以通过监听配置中心使用 `@ConditionOnRule("current.beanName == global.myServiceName")` 来指定当前要切换为哪个实现类. 这里的 `myServiceName`可以通过 `GlobalSmartIocContext#registerGlobalVar(name, obj)`写入                                                       |
+| 变量名     | 说明                                                                                          | 补充                                                                                                                                                                                                                                 |
+|---------|---------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| args    | 当前调用的方法的入参, 允许在condition rule里面使用函数入参判定是否调用该实现类的方法，这个参数每次执行方法调用的时候都会作为临时变量写入运行环境            | 例如，你的方法定义为```String greeting(String name, String sex);```, 那么你可以在 condition rule里面通过 `args.name` 或 `args.sex` 来访问被调用的方法(Method)的入参                                                                                                 |
+| global  | 全局的变量或工具类                                                                                   | 你可以使用 `global` 在condition rule中访问你写入的全局变量或一些工具类，例如，当你使用 `globalSmartIocContext.registerGlobalVar("random", new Random()))`注册`random`后，可以使用这样子的表达式 `@ConditionOnRule("global.random.nextInt(100) % 10 >= 8")`来将 20% 的流量来打到当前的这个实现类上 |
+| current | 允许在 condition rule 维度来访问当前的 beanName(`current.beanName`) 和 methodName(`current.methodName`) | 这里你可以通过监听配置中心使用 `@ConditionOnRule("current.beanName == global.myServiceName")` 来指定当前要切换为哪个实现类. 这里的 `myServiceName`可以通过 `GlobalSmartIocContext#registerGlobalVar(name, obj)`写入                                                      |
 
 **写入全局变量：**
 
@@ -88,6 +85,53 @@ public class SetGlobalConfigTest {
     }
 }
 ```
+接下来你可以通过`global`变量来访问这里注册的全局变量和全局函数.例如, 你可以像下面这样，指定当 qps 小于 2000 时利用注册的 random 函数将 20% 的流量打到这个实现上：
+
+```java
+import plus.jdk.smart.ioc.annotations.SmartService;
+
+@ConditionOnRule("global.qps < 2000 && random.nextInt(100) % 10 > 8")
+@SmartService(group = MyService.class)
+public class QpsDegradeService implements MyService {
+    // do something
+}
+```
+**最后的魔法**
+
+思虑再三，虽然这样子会带来一些安全性的问题，但是这完全取决于使用者了，不应该舍本逐末。
+最后登场的魔法就是全局`jexl.eval(anyString())`函数了，这个函数允许你直接通过全局变量指定脚本内容。
+> 当然了，你也可以是用局部变量来传递脚本来执行，但是注意，这是非常不安全的一种做法，因为函数的输入大多来自外部输入，
+> 如果你把这个功能开放给外部输入，那你最好保证调用方是可信的，值得你去给他最高级别的执行权限！！！否则就不要这么做。
+> 甚至于，在上述功能足够满足你需求的情况下，尽量不要使用这个魔法函数，这里只是为了满足一些上述功能不能满足需求的场景
+
+通过这个功能，你可以把你想要执行的脚本配置在 配置中心（或 mysql、redis 都可以，主要你能读取到） 中，当服务启动或配置变化时，通过如下指令来更新你的脚本到 `global` 对象中:
+
+```java
+public class SmartIocSelectorFactoryTest {
+
+    /**
+     * Global intelligent IOC context instance, used to obtain and manage global configuration information.
+     */
+    @Resource
+    private GlobalSmartIocContext globalSmartIocContext;
+
+    @Test
+    public void evalExpressionTest() {
+        // Test the magic jexl.eval() function
+        globalSmartIocContext.registerGlobalVar("testScript", "1 + 2");
+    }
+}
+```
+
+然后使用 `@ConditionOnRule("jexl.eval(global.testScript)")`配置在需要的类或者方法上即可。通过这个魔法方法你可以把你的切换规则放在配置中心，通过配置中心按需求动态下发即可！！！
+
+> 注意, 使用函数输入时，千万不要把 `args` 的成员变量的内容传递给`jexl.eval(anyString())`函数，这会导致你的入参变成可执行的脚本！！！比如你的函数入参分别为 `a=3`、`b=4`,
+> 你可以这么写`@ConditionOnRule("jexl.eval(global.testScript) > args.a + args.b")`, 这是安全的; 但是如果你直接把 args的参数内容直接传递给`jexl.eval(anyString())`，
+> 例如 `@ConditionOnRule("jexl.eval(args.b)")，这无疑是一种裸奔的行为，会导致你的服务受到攻击，甚至导致更严重的后果。
+
+所以，我的朋友，我还是不得不提醒你，<p style="color: red; ">__永远都不要把入参直接当做脚本执行，这不管在哪都是一样的， 
+就像[变基的风险](https://git-scm.com/book/zh/v2/Git-%E5%88%86%E6%94%AF-%E5%8F%98%E5%9F%BA.html#_rebase_peril)中提交到的，
+如果你遵循这条金科玉律，就不会出差错。否则人民群众会仇恨你，你的朋友和家人也会嘲笑你，唾弃你!!!__<p>
 
 ## 四、服务降级 & 小流量灰度的示例
 

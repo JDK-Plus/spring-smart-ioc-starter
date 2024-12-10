@@ -8,11 +8,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import plus.jdk.smart.ioc.TomcatLauncher;
 import plus.jdk.smart.ioc.global.GlobalSmartIocContext;
+import plus.jdk.smart.ioc.global.SmartIocSelectorFactory;
 import plus.jdk.smart.ioc.model.RecallContext;
 import plus.jdk.smart.ioc.model.RecallResult;
 import plus.jdk.smart.ioc.service.degrade.MaterialRecallService;
 
 import javax.annotation.Resource;
+import java.util.HashMap;
 
 @Slf4j
 @RunWith(SpringRunner.class)
@@ -30,6 +32,12 @@ public class DegradeByGlobalConfigTest {
      */
     @Resource
     private GlobalSmartIocContext globalSmartIocContext;
+
+    /**
+     * Factory class instance for obtaining and selecting the appropriate IoC container。
+     */
+    @Resource
+    private SmartIocSelectorFactory smartIocSelectorFactory;
 
     @Test
     public void degradeTest() {
