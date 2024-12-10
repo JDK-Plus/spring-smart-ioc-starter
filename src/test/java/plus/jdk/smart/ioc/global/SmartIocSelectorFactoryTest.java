@@ -2,6 +2,7 @@ package plus.jdk.smart.ioc.global;
 
 import cn.hutool.core.date.StopWatch;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,18 +26,23 @@ public class SmartIocSelectorFactoryTest {
     @Resource
     private SmartIocSelectorFactory smartIocSelectorFactory;
 
+    /**
+     * Global intelligent IOC context instance, used to obtain and manage global configuration information.
+     */
+    @Resource
+    private GlobalSmartIocContext globalSmartIocContext;
+
     @Test
     public void evalExpressionTest() {
-        DispatchContext dispatchContext = new DispatchContext() {};
-        dispatchContext.setName("jack");
-        StopWatch stopWatch = new StopWatch();
-        stopWatch.start();
-        String expression = "dispatchContext.getName() == \"jack\".substring(1)";
-        Map<String, Object> params = new HashMap<>();
-        params.put("dispatchContext", dispatchContext);
+        // Test the magic jexl.eval() function
+        Map<String, Object> args = new HashMap<>();
 
-        Object object = smartIocSelectorFactory.evalExpression(expression, params, "testBean", "name");
-        stopWatch.stop();
-        log.info("evalExpression cost {}ms", stopWatch.getTotalTimeMillis());
+        globalSmartIocContext.registerGlobalVar("testScript", "1 + 2");
+        Assert.assertEquals(smartIocSelectorFactory.evalExpression("jexl.eval(global.testScript)", args, null, null), 3);
+
+        args.put("c", 4);
+        globalSmartIocContext.registerGlobalVar("testScript", "1 + 2");
+        Assert.assertEquals(smartIocSelectorFactory.evalExpression("jexl.eval(global.testScript) < args.c", args, null, null), true);
+        Assert.assertEquals(smartIocSelectorFactory.evalExpression("jexl.eval(global.testScript) > args.c", args, null, null), false);
     }
 }

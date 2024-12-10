@@ -37,11 +37,24 @@ public class SmartIocSelectorFactory {
     private final GlobalSmartIocContext globalSmartIocContext;
 
     /**
+     * Jexl expression engine for parsing and executing conditional expressions.
+     */
+    private final JexlEngine jexlEngine;
+
+    /**
      * Create a new SmartIocSelectorFactory instance.
      */
     public SmartIocSelectorFactory(ApplicationContext applicationContext, GlobalSmartIocContext globalSmartIocContext) {
         this.applicationContext = applicationContext;
         this.globalSmartIocContext = globalSmartIocContext;
+        JexlFeatures jexlFeatures = new JexlFeatures()
+                // Disable execution of loop statements
+                .loops(false)
+                // Disable modification of global variables
+                .sideEffectGlobal(false)
+                // Disable side effects, i.e. do not allow expressions to modify any variables (global or local)
+                .sideEffect(false);
+        this.jexlEngine = new JexlBuilder().features(jexlFeatures).create();
     }
 
     /**
@@ -65,25 +78,18 @@ public class SmartIocSelectorFactory {
      * <a href="https://commons.apache.org/proper/commons-jexl/">commons-jexl</a>
      */
     public Object evalExpression(String expression, Map<String, Object> params, String beanName, String methodName) {
-        StopWatch stopWatch = new StopWatch();
+        StopWatch stopWatch = new StopWatch(expression);
         stopWatch.start(String.format("{%s}-{%s}", expression, params));
-        JexlFeatures jexlFeatures = new JexlFeatures()
-                // 禁止执行循环语句
-                .loops(false)
-                // 禁止修改全局变量
-                .sideEffectGlobal(false)
-                // 禁用副作用，即不允许表达式对任何变量（全局或局部）进行修改
-                .sideEffect(false);
-        Properties properties = new Properties();
-        properties.put("beanName", beanName);
-        properties.put("methodName", methodName);
-        JexlEngine jexl = new JexlBuilder().features(jexlFeatures).create();
         JexlContext context = new MapContext();
         context.set("args", params);
         context.set("random", new Random());
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("beanName", beanName);
+        properties.put("methodName", methodName);
         context.set("current", properties);
         context.set("global", globalSmartIocContext.getGlobalProperties());
-        Object result = jexl.createExpression(expression).evaluate(context);
+        context.set("jexl", (Evalable) script -> evalExpression(script, params, beanName, methodName));
+        Object result = jexlEngine.createExpression(expression).evaluate(context);
         stopWatch.stop();
         log.info("evalExpression {}, cost {}ms, {}", expression, stopWatch.getTotalTimeMillis(), stopWatch.prettyPrint());
         return result;
