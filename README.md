@@ -34,6 +34,16 @@ ISP）则要求我们确保流程中的任何接口实现都可以被替换，
 
 ![](doc/img/idea.png)
 
+你可以像这样子引入他：
+
+```xml
+<dependency>
+    <groupId>plus.jdk</groupId>
+    <artifactId>spring-smart-ioc-starter</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
 ## 三、高级用法-自定义全局变量和全局函数
 
 组件中提供了一个 bean ```GlobalSmartIocContext#registerGlobalVar(name, obj)``` 来注册全局的变量的功能，示例如下：
