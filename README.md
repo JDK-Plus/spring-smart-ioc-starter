@@ -37,7 +37,7 @@ ISP）则要求我们确保流程中的任何接口实现都可以被替换，
 <dependency>
     <groupId>plus.jdk</groupId>
     <artifactId>spring-smart-ioc-starter</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
 </dependency>
 ```
 

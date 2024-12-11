@@ -48,7 +48,7 @@ title 启动 & 执行时序图
 !define jexl_engine_eval_msg PURPLE_TEXT("通过 jexl 来执行脚本并获取返回结果")
 !define jexl_engine_eval_result PURPLE_TEXT("jexl 执行输入的条件表达式并返回结果")
 !define jexl_engine_eval_condition PURPLE_TEXT("判定jexl 执行输入的条件表达式是否为 true")
-!define loop_bean_impl_msg "遍历所有的 bean 实现"
+!define loop_bean_impl_msg "遍历所有的 bean 实现，根据@ConditionOnRule直接标注的规则来判定是否执行。注意，class上面标注规则的优先级高于method上标注的规则"
 !define script_eval_true_msg "jexl eval结果为 true"
 !define script_eval_false_msg "jexl eval结果为 false"
 !define script_eval_false_continue_msg "继续遍历 eval下一个 bean的条件"
@@ -56,10 +56,10 @@ title 启动 & 执行时序图
 !define bean_impl_invoke_method_return_msg RED_TEXT("返回函数执行结果")
 !define no_matching_rules_were_hit "未命中任何符合条件实现类"
 !define get_default_implementation_annotated_via_primary_msg RED_TEXT(获取通过@SmartService的primary)\nRED_TEXT(属性标注的默认实现)
-!define bean_load_flow_note GREEN_TEXT(在这里会扫描并记录所有接口被)\nRED_TEXT("@SmartService")GREEN_TEXT( 标注的实现类)
-!define jexl_desc_note_line1 YELLOW_TEXT("JEXL（Java Expression Language）是Apache Commons项目中的一个子项目,它提供了一种轻量级且灵活的表达式语言，") 
-!define jexl_desc_note_line2 YELLOW_TEXT("用于在Java应用程序中动态计算和操作数据。JEXL的设计初衷是为了使表达式的解析和执行变得简单且高效，同时保持与Java语言的紧密集成。")
-!define jexl_desc_note_line3 YELLOW_TEXT("JEXL设计之初就考虑了性能问题，通过编译和缓存机制来提高表达式的执行效率。这里的逻辑判定耗时一般在纳秒级别")
+!define bean_load_flow_note GREEN_TEXT(在这里会扫描并记录所有接口被)\nRED_TEXT("@SmartService")GREEN_TEXT( 标注的实现类)\nGREEN_TEXT(必须有一个默认实现作为兜底)
+!define jexl_desc_note_line1 YELLOW_TEXT("JEXL（Java Expression Language）是Apache Commons项目中的一个子项目,它提供了一种轻量级且灵活的表达式语言，用于在Java应用程序") 
+!define jexl_desc_note_line2 YELLOW_TEXT("中动态计算和操作数据。JEXL的设计初衷是为了使表达式的解析和执行变得简单且高效，同时保持与Java语言的紧密集成。JEXL设计之初就考虑了")
+!define jexl_desc_note_line3 YELLOW_TEXT("考虑了性能问题，通过编译和缓存机制来提高表达式的执行效率。这里的逻辑判定耗时一般在纳秒级别，所以不需要担心这里实时判定的性能问题")
 
 
 

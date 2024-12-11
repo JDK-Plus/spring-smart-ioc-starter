@@ -5,6 +5,7 @@ import cn.hutool.core.util.ClassUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.jexl3.*;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.SmartLifecycle;
 import plus.jdk.smart.ioc.annotations.ConditionOnRule;
 import plus.jdk.smart.ioc.annotations.SmartService;
 import lombok.SneakyThrows;
@@ -19,7 +20,7 @@ import java.util.stream.IntStream;
 import java.util.zip.CRC32;
 
 @Slf4j
-public class SmartIocSelectorFactory {
+public class SmartIocSelectorFactory implements SmartLifecycle {
 
     /**
      * Stores the mapping relationship between the SmartService interface and its implementation class for dynamic proxying and instantiation.
@@ -40,6 +41,11 @@ public class SmartIocSelectorFactory {
      * Jexl expression engine for parsing and executing conditional expressions.
      */
     private final JexlEngine jexlEngine;
+
+    /**
+     * A flag indicating whether SmartIocSelectorFactory has been started.
+     */
+    private Boolean started;
 
     /**
      * Create a new SmartIocSelectorFactory instance.
@@ -141,5 +147,26 @@ public class SmartIocSelectorFactory {
         }
         throw new RuntimeException(String.format("No implementation class meeting the ConditionOnRule conditions for interface %s was found, " +
                 "and no primary bean was registered, method: %s", interfaceClazz, method.getName()));
+    }
+
+    @Override
+    public void start() {
+        this.started = true;
+        for(Class<?> clazz : beanDefinitionMap.keySet()) {
+            SmartIocDefinition smartIocDefinition = beanDefinitionMap.get(clazz);
+            if(smartIocDefinition.getDefaultDescriptor() == null) {
+                throw new RuntimeException(String.format("The defined grouping interface %s does not have an implementation class annotated with the `primary` attribute of @SmartService", clazz.getName()));
+            }
+        }
+    }
+
+    @Override
+    public void stop() {
+        this.started = false;
+    }
+
+    @Override
+    public boolean isRunning() {
+        return started;
     }
 }
