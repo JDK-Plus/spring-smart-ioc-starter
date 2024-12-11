@@ -45,7 +45,7 @@ public class SmartIocSelectorFactory implements SmartLifecycle {
     /**
      * A flag indicating whether SmartIocSelectorFactory has been started.
      */
-    private Boolean started;
+    private Boolean started = false;
 
     /**
      * Create a new SmartIocSelectorFactory instance.

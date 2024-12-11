@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableSmartInject
-@ConditionalOnProperty(value = "smart.ioc.enable", havingValue = "true")
+//@ConditionalOnProperty(value = "smart.ioc.enable", havingValue = "true")
 @EnableConfigurationProperties(GlobalInjectProperties.class)
 public class SmartIocGlobalConfiguration {
 
