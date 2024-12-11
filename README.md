@@ -1,8 +1,8 @@
 ## 一、说在前面的话
 
-本项目描述并实现了一种基于动态代理与配置中心切换 bean 的实现类来达到服务降级与流量灰度发布方法的研究。
+本项目描述并实现了一种基于动态代理与配置中心实时判定动态切换接口的实现类来达到服务降级与流量灰度发布的方法。
 
-这是一个通过动态切换接口的实现类（springboot 中的 bean ），实现了一种高效而灵活的解决方案，用于应对复杂系统中的服务降级和功能灰度发布。
+这是一个通过动态切换接口的实现类（springboot 中的 bean ），实现了一种高效而灵活的解决方案，用于应对复杂系统中的服务降级和功能灰度发布的解决方案。
 
 **该项目提出并实现了一种使用动态代理和配置中心来管理某个接口的多个业务实现，通过动态切换 Bean 的实现类快速实现服务降级。
 此外，借助 [JEXL](https://commons.apache.org/proper/commons-jexl/)  自定义方法的解析规则，还提供了一种小流量功能灰度发布的解决方案。**
@@ -123,14 +123,14 @@ public class SmartIocSelectorFactoryTest {
 }
 ```
 
-然后使用 `@ConditionOnRule("jexl.eval(global.testScript)")`配置在需要的类或者方法上即可。通过这个魔法方法你可以把你的切换规则放在配置中心，通过配置中心按需求动态下发即可！！！
+然后使用 `@ConditionOnRule("jexl.eval(global.testScript)")`标注在需要的类或者方法上即可。通过这个魔法方法你可以把你的切换规则放在配置中心，通过配置中心按需求动态下发即可！！！
 
 > 注意, 使用函数输入时，千万不要把 `args` 的成员变量的内容传递给`jexl.eval(anyString())`函数，这会导致你的入参变成可执行的脚本！！！比如你的函数入参分别为 `a=3`、`b=4`,
 > 你可以这么写`@ConditionOnRule("jexl.eval(global.testScript) > args.a + args.b")`, 这是安全的; 但是如果你直接把 args的参数内容直接传递给`jexl.eval(anyString())`，
 > 例如 `@ConditionOnRule("jexl.eval(args.b)")，这无疑是一种裸奔的行为，会导致你的服务受到攻击，甚至导致更严重的后果。
 
 所以，我的朋友，我还是不得不提醒你，<p style="color: red; ">__永远都不要把入参直接当做脚本执行，这不管在哪都是一样的， 
-就像[变基的风险](https://git-scm.com/book/zh/v2/Git-%E5%88%86%E6%94%AF-%E5%8F%98%E5%9F%BA.html#_rebase_peril)中提交到的，
+就像[变基的风险](https://git-scm.com/book/zh/v2/Git-%E5%88%86%E6%94%AF-%E5%8F%98%E5%9F%BA.html#_rebase_peril)中提到的，
 如果你遵循这条金科玉律，就不会出差错。否则人民群众会仇恨你，你的朋友和家人也会嘲笑你，唾弃你!!!__<p>
 
 ## 四、服务降级 & 小流量灰度的示例
