@@ -155,7 +155,7 @@ public class SmartIocSelectorFactory implements SmartLifecycle {
         for(Class<?> clazz : beanDefinitionMap.keySet()) {
             SmartIocDefinition smartIocDefinition = beanDefinitionMap.get(clazz);
             if(smartIocDefinition.getDefaultDescriptor() == null) {
-                throw new RuntimeException(String.format("The defined grouping interface %s does not have an implementation class annotated with the `primary` attribute of @SmartService", clazz.getName()));
+               log.warn(String.format("The defined grouping interface %s does not have an implementation class annotated with the `primary` attribute of @SmartService", clazz.getName()));
             }
         }
     }

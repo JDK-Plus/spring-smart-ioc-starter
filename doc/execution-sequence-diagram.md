@@ -1,4 +1,5 @@
-```plantuml:execution-sequence-diagram
+```plantuml
+:execution-sequence-diagram
 @startuml
 skinparam backgroundColor #EEEBDC
 skinparam handwritten true
